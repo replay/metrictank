@@ -315,6 +315,12 @@
 			"revisionTime": "2016-01-19T22:16:36Z"
 		},
 		{
+			"checksumSHA1": "rKV8YLkXpeNG1Oix8hlYqVsEFb4=",
+			"path": "github.com/streadway/amqp",
+			"revision": "2e25825abdbd7752ff08b270d313b93519a0a232",
+			"revisionTime": "2016-03-11T21:55:03Z"
+		},
+		{
 			"checksumSHA1": "QMPn4XX/OM3SYq3leNhEty32hmk=",
 			"path": "github.com/syndtr/goleveldb/leveldb",
 			"revision": "6ae1797c0b42b9323fc27ff7dcf568df88f2f33d",
@@ -397,7 +403,7 @@
 			"path": "gopkg.in/inf.v0",
 			"revision": "3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4",
 			"revisionTime": "2015-09-11T12:57:57Z"
-		}
+		},
 	],
 	"rootPath": "github.com/raintank/metrictank"
 }

@@ -30,6 +30,7 @@ import (
 	inKafkaMdam "github.com/raintank/metrictank/in/kafkamdam"
 	inKafkaMdm "github.com/raintank/metrictank/in/kafkamdm"
 	inNSQ "github.com/raintank/metrictank/in/nsq"
+	inRabbitMQ "github.com/raintank/metrictank/in/rabbitmq"
 	"github.com/raintank/metrictank/mdata"
 	"github.com/raintank/metrictank/mdata/chunk"
 	clKafka "github.com/raintank/metrictank/mdata/clkafka"
@@ -44,6 +45,7 @@ var (
 	inKafkaMdmInst  *inKafkaMdm.KafkaMdm
 	inKafkaMdamInst *inKafkaMdam.KafkaMdam
 	inNSQInst       *inNSQ.NSQ
+	inRabbitMQInst  *inRabbitMQ.RabbitMQ
 	clKafkaInst     *mdata.ClKafka
 	clNSQInst       *mdata.ClNSQ
 
@@ -154,6 +156,7 @@ func main() {
 		inKafkaMdm.ConfigSetup()
 		inKafkaMdam.ConfigSetup()
 		inNSQ.ConfigSetup()
+		inRabbitMQ.ConfigSetup()
 
 		// load config for cluster handlers
 		clNSQ.ConfigSetup()
@@ -206,7 +209,7 @@ func main() {
 	clNSQ.ConfigProcess()
 	clKafka.ConfigProcess(*instance)
 
-	if !inCarbon.Enabled && !inKafkaMdm.Enabled && !inKafkaMdam.Enabled && !inNSQ.Enabled {
+	if !inCarbon.Enabled && !inKafkaMdm.Enabled && !inKafkaMdam.Enabled && !inNSQ.Enabled && !inRabbitMQ.Enabled {
 		log.Fatal(4, "you should enable at least 1 input plugin")
 	}
 
@@ -315,6 +318,10 @@ func main() {
 		inNSQInst = inNSQ.New(stats)
 	}
 
+	if inRabbitMQ.Enabled {
+		inRabbitMQInst = inRabbitMQ.New(stats)
+	}
+
 	accountingPeriod := dur.MustParseUNsec("accounting-period", *accountingPeriodStr)
 
 	metrics = mdata.NewAggMetrics(store, chunkSpan, numChunks, chunkMaxStale, metricMaxStale, ttl, gcInterval, finalSettings)
@@ -378,6 +385,9 @@ func main() {
 	}
 	if inNSQ.Enabled {
 		inNSQInst.Start(metrics, metricIndex, usg)
+	}
+	if inRabbitMQ.Enabled {
+		inRabbitMQInst.Start(metrics, metricIndex, usg)
 	}
 
 	promotionReadyAtChan <- (uint32(time.Now().Unix())/highestChunkSpan + 1) * highestChunkSpan
