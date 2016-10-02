@@ -86,7 +86,6 @@ func (r *RabbitMQ) connect() (bool) {
 	r.state.ch = ch
 	ch.NotifyClose(closeNotification)
 
-
 	q, err := ch.QueueDeclare(
 		r.queue, // queue name
 		false,   // durable
@@ -140,10 +139,7 @@ func (r *RabbitMQ) process(d amqp.Delivery) {
 	r.In.Handle(d.Body)
 }
 
-func (r *RabbitMQ) Start(metrics mdata.Metrics, metricIndex idx.MetricIndex, usg *usage.Usage) {
-	r.In = in.New(metrics, metricIndex, usg, "rabbitMq", r.stats)
-	r.url = "amqp://" + r.user + ":" + r.pass + "@" + r.addr + ":" + strconv.Itoa(r.port) + r.vhost
-
+func (r *RabbitMQ) consumeLoop() {
 	r.connectLoop()
 	for {
 		msgs, err := r.consume()
@@ -162,4 +158,11 @@ func (r *RabbitMQ) Start(metrics mdata.Metrics, metricIndex idx.MetricIndex, usg
 		log.Info("Rabbit closed the connection")
 		r.reconnect()
 	}
+}
+
+func (r *RabbitMQ) Start(metrics mdata.Metrics, metricIndex idx.MetricIndex, usg *usage.Usage) {
+	r.In = in.New(metrics, metricIndex, usg, "rabbitMq", r.stats)
+	r.url = "amqp://" + r.user + ":" + r.pass + "@" + r.addr + ":" + strconv.Itoa(r.port) + r.vhost
+
+	go r.consumeLoop()
 }
