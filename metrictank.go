@@ -250,6 +250,14 @@ func main() {
 	if (mdata.Month_sec % chunkSpan) != 0 {
 		log.Fatal(4, "chunkSpan must fit without remainders into month_sec (28*24*60*60)")
 	}
+	// 153600 is the max because we use 8bit per chunk to store the length with precision of 10min
+	// 2 ^ 8 * 10 * 60 = 153600
+	if chunkSpan > 153600 {
+		log.Fatal(4, "chunkSpan can not be more than 153600 (2^8*10*60)")
+	}
+	if (chunkSpan % 600) != 0 {
+		log.Fatal(4, "chunkSpan must be a multiple of 10min (600)")
+	}
 
 	set := strings.Split(*aggSettings, ",")
 	finalSettings := make([]mdata.AggSetting, 0)
@@ -268,6 +276,12 @@ func main() {
 		aggTTL := dur.MustParseUNsec("aggsettings", fields[3])
 		if (mdata.Month_sec % aggChunkSpan) != 0 {
 			log.Fatal(4, "aggChunkSpan must fit without remainders into month_sec (28*24*60*60)")
+		}
+		if aggChunkSpan > 153600 {
+			log.Fatal(4, "aggChunkSpan can not be more than 153600 (2^8*10*60)")
+		}
+		if (aggChunkSpan % 600) != 0 {
+			log.Fatal(4, "aggChunkSpan must be a multiple of 10min (600)")
 		}
 		highestChunkSpan = util.Max(highestChunkSpan, aggChunkSpan)
 		ready := true

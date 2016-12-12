@@ -22,6 +22,7 @@ import (
 // write aggregated data to cassandra.
 
 const Month_sec = 60 * 60 * 24 * 28
+const LengthPrecision = 10 * 60 // 10min
 
 const keyspace_schema = `CREATE KEYSPACE IF NOT EXISTS %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}  AND durable_writes = true`
 const table_schema = `CREATE TABLE IF NOT EXISTS %s.metric (
@@ -204,9 +205,10 @@ func (c *cassandraStore) processWriteQueue(queue chan *ChunkWriteRequest, meter 
 
 			data := cwr.chunk.Series.Bytes()
 			chunkSizeAtSave.Value(int64(len(data)))
-			version := chunk.FormatStandardGoTsz
+			version := chunk.FormatWithLen
 			buf := new(bytes.Buffer)
 			binary.Write(buf, binary.LittleEndian, uint8(version))
+			binary.Write(buf, binary.LittleEndian, uint8(cwr.len/LengthPrecision))
 			buf.Write(data)
 			success := false
 			attempts := 0
@@ -359,11 +361,17 @@ func (c *cassandraStore) Search(key string, start, end uint32) ([]iter.Iter, err
 				log.Error(3, errChunkTooSmall.Error())
 				return iters, errChunkTooSmall
 			}
-			if chunk.Format(b[0]) != chunk.FormatStandardGoTsz {
+			switch chunk.Format(b[0]) {
+			case chunk.FormatStandardGoTsz:
+				b = b[1:]
+			case chunk.FormatWithLen:
+				_ = uint8(b[1]) // this is the chunk length in 10min intervals
+				b = b[2:]
+			default:
 				log.Error(3, errUnknownChunkFormat.Error())
 				return iters, errUnknownChunkFormat
 			}
-			it, err := tsz.NewIterator(b[1:])
+			it, err := tsz.NewIterator(b)
 			if err != nil {
 				log.Error(3, "failed to unpack cassandra payload. %s", err)
 				return iters, err
