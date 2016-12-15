@@ -368,6 +368,7 @@ func main() {
 		log.Warn("It is not recommended to run a mulitnode cluster with more then 1 input plugin.")
 	}
 
+<<<<<<< 7ddfd41974354cf9d15c81d022bc91f3be8f130a
 	/***********************************
 		Initialize MetricPerrist notifiers
 	***********************************/
@@ -385,7 +386,7 @@ func main() {
 	/***********************************
 		Initialize our MetricIdx
 	***********************************/
-	cache := cache.NewChunkCache()
+	cache := cache.NewCCache()
 	metrics = mdata.NewAggMetrics(store, chunkSpan, numChunks, chunkMaxStale, metricMaxStale, ttl, gcInterval, finalSettings)
 	pre := time.Now()
 
